@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz API - Sistema de Preguntas</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- PÁGINA DE LOGIN CON DOCUMENTACIÓN -->
+        <div id="login-page" class="page active">
+            <div class="login-container">
+                <!-- SECCIÓN IZQUIERDA: LOGIN -->
+                <div class="login-box">
+                    <h1>🎯 Quiz API</h1>
+                    <p class="subtitle">Sistema Interactivo de Preguntas</p>
+                    
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username">👤 Nombre de Usuario</label>
+                            <input type="text" id="username" placeholder="Ingresa tu nombre completo" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            ✓ Iniciar Sesión
+                        </button>
+                    </form>
+                    
+                    <div class="login-info">
+                        <p><strong>¿Qué puedes hacer?</strong></p>
+                        <ul>
+                            <li>📋 Ver todas las preguntas disponibles</li>
+                            <li>➕ Crear nuevas preguntas</li>
+                            <li>🎮 Realizar quizzes interactivos</li>
+                            <li>📊 Consultar estadísticas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DERECHA: DOCUMENTACIÓN -->
+                <div class="docs-section">
+                    <h2>📚 Documentación de la API</h2>
+                    
+                    <div class="docs-buttons">
+                        <a href="/docs" target="_blank" class="btn-docs btn-swagger">
+                            <span>🔍 Probar API</span>
+                            <small>Swagger UI</small>
+                        </a>
+                        <a href="/redoc" target="_blank" class="btn-docs btn-redoc">
+                            <span>📖 Documentación</span>
+                            <small>ReDoc</small>
+                        </a>
+                    </div>
+
+                    <div class="docs-content">
+                        <h3>Endpoints Disponibles</h3>
+                        <ul class="endpoints-list">
+                            <li><strong>POST /questions/</strong> - Crear pregunta</li>
+                            <li><strong>GET /questions/</strong> - Listar preguntas</li>
+                            <li><strong>GET /questions/{id}</strong> - Obtener pregunta</li>
+                            <li><strong>GET /questions/random</strong> - Pregunta aleatoria</li>
+                            <li><strong>PUT /questions/{id}</strong> - Actualizar pregunta</li>
+                            <li><strong>DELETE /questions/{id}</strong> - Eliminar pregunta</li>
+                        </ul>
+
+                        <h3>Sesiones de Quiz</h3>
+                        <ul class="endpoints-list">
+                            <li><strong>POST /quiz-sessions/</strong> - Crear sesión</li>
+                            <li><strong>GET /quiz-sessions/</strong> - Listar sesiones</li>
+                            <li><strong>GET /quiz-sessions/{id}</strong> - Obtener sesión</li>
+                            <li><strong>PUT /quiz-sessions/{id}/complete</strong> - Completar quiz</li>
+                        </ul>
+
+                        <h3>Respuestas y Estadísticas</h3>
+                        <ul class="endpoints-list">
+                            <li><strong>POST /answers/</strong> - Registrar respuesta</li>
+                            <li><strong>GET /statistics/global</strong> - Estadísticas globales</li>
+                            <li><strong>GET /statistics/session/{id}</strong> - Estadísticas de sesión</li>
+                        </ul>
+
+                        <h3>Ejemplo de Pregunta</h3>
+                        <pre class="code-block">{
+  "pregunta": "¿Cuál es la capital de Francia?",
+  "opciones": ["Madrid", "París", "Roma", "Berlín"],
+  "respuesta_correcta": "París",
+  "explicacion": "París es la capital de Francia",
+  "categoria": "Geografía",
+  "dificultad": "fácil"
+}</pre>
+
+                        <div class="demo-section">
+                            <h3>Crear Pregunta de Prueba</h3>
+                            <button type="button" class="btn btn-demo" onclick="crearPreguntaDemo()">
+                                ✨ Crear pregunta de ejemplo
+                            </button>
+                            <div id="demo-result"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PÁGINA PRINCIPAL -->
+        <div id="main-page" class="page">
+            <header>
+                <div class="header-content">
+                    <h1>🎯 Quiz API</h1>
+                    <div class="user-info">
+                        <span id="username-display"></span>
+                        <button id="logout-btn" class="btn btn-small">Cerrar Sesión</button>
+                    </div>
+                </div>
+            </header>
+
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="questions">📋 Ver Preguntas</button>
+                <button class="tab-btn" data-tab="create">➕ Crear Pregunta</button>
+                <button class="tab-btn" data-tab="quiz">🎮 Hacer Quiz</button>
+            </nav>
+
+            <!-- TAB: VER PREGUNTAS -->
+            <div id="questions" class="tab-content active">
+                <h2>📋 Preguntas Disponibles</h2>
+                <div class="filters">
+                    <input type="text" id="search" placeholder="Buscar pregunta...">
+                    <select id="category-filter">
+                        <option value="">Todas las categorías</option>
+                        <option value="Matemáticas">Matemáticas</option>
+                        <option value="Geografía">Geografía</option>
+                        <option value="Historia">Historia</option>
+                        <option value="Ciencias">Ciencias</option>
+                        <option value="Astronomía">Astronomía</option>
+                        <option value="Literatura">Literatura</option>
+                    </select>
+                    <select id="difficulty-filter">
+                        <option value="">Todos los niveles</option>
+                        <option value="fácil">Fácil</option>
+                        <option value="medio">Media</option>
+                        <option value="difícil">Difícil</option>
+                    </select>
+                </div>
+                <div id="questions-list" class="questions-grid"></div>
+            </div>
+
+            <!-- TAB: CREAR PREGUNTA -->
+            <div id="create" class="tab-content">
+                <h2>➕ Crear Nueva Pregunta</h2>
+                <form id="create-form" class="form-box">
+                    <div class="form-group">
+                        <label for="pregunta">Pregunta</label>
+                        <textarea id="pregunta" placeholder="Escribe la pregunta" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <select id="categoria" required>
+                            <option value="">Selecciona categoría</option>
+                            <option value="Matemáticas">Matemáticas</option>
+                            <option value="Geografía">Geografía</option>
+                            <option value="Historia">Historia</option>
+                            <option value="Ciencias">Ciencias</option>
+                            <option value="Astronomía">Astronomía</option>
+                            <option value="Literatura">Literatura</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dificultad">Dificultad</label>
+                        <select id="dificultad" required>
+                            <option value="">Selecciona dificultad</option>
+                            <option value="fácil">Fácil</option>
+                            <option value="medio">Media</option>
+                            <option value="difícil">Difícil</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Opciones (4 opciones)</label>
+                        <input type="text" class="option-input" placeholder="Opción 1" required>
+                        <input type="text" class="option-input" placeholder="Opción 2" required>
+                        <input type="text" class="option-input" placeholder="Opción 3" required>
+                        <input type="text" class="option-input" placeholder="Opción 4" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="respuesta">Respuesta Correcta</label>
+                        <select id="respuesta" required>
+                            <option value="">Selecciona respuesta correcta</option>
+                            <option value="0">Opción 1</option>
+                            <option value="1">Opción 2</option>
+                            <option value="2">Opción 3</option>
+                            <option value="3">Opción 4</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="explicacion">Explicación</label>
+                        <textarea id="explicacion" placeholder="Explica por qué es correcta esta respuesta"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Crear Pregunta</button>
+                </form>
+            </div>
+
+            <!-- TAB: HACER QUIZ -->
+            <div id="quiz" class="tab-content">
+                <h2>🎮 Hacer Quiz</h2>
+                <div id="quiz-start" class="quiz-start">
+                    <p>Selecciona cuántas preguntas quieres responder:</p>
+                    <div class="quiz-options">
+                        <button class="btn btn-primary" onclick="startQuiz(5)">5 Preguntas</button>
+                        <button class="btn btn-primary" onclick="startQuiz(10)">10 Preguntas</button>
+                        <button class="btn btn-primary" onclick="startQuiz(15)">15 Preguntas</button>
+                    </div>
+                </div>
+                <div id="quiz-container" style="display:none;"></div>
+            </div>
+
+            <!-- TAB: ESTADÍSTICAS -->
+            <!-- Estadísticas eliminadas del frontend -->
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
+
