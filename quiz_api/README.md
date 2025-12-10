@@ -1,200 +1,49 @@
-# Quiz API REST - FastAPI
+# Quiz API (breve)
 
-Una API REST completa para gestionar un sistema de quiz interactivo, construida con **FastAPI**, **SQLAlchemy** y **SQLite**.
+Pequeña API REST para gestionar un quiz (FastAPI + SQLAlchemy + SQLite).
 
-## 🚀 Inicio Rápido
+para arrancar y probar:
 
-```bash
-# 1. Instalar dependencias
-pip install -r requirements.txt
+1) Instalar dependencias
 
-# 2. Ejecutar servidor
-uvicorn app.main:app --port 8000
-
-# 3. Abrir documentación interactiva
-# Swagger UI: http://localhost:8000/docs
-# ReDoc: http://localhost:8000/redoc
-```
-
-## 📋 Descripción
-
-Esta API proporciona servicios backend para una aplicación de quiz interactivo, incluyendo:
-
-- **Gestión de Preguntas**: CRUD completo, filtrado por categoría y dificultad
-- **Sesiones de Quiz**: Iniciar, gestionar y finalizar sesiones de usuarios
-- **Registro de Respuestas**: Almacenar y validar respuestas de usuarios
-- **Estadísticas**: Reportes globales, por sesión, preguntas difíciles, rendimiento por categoría
-
-## 🚀 Inicio Rápido
-
-### 1. Requisitos
-
-- Python 3.8 o superior
-- pip (gestor de paquetes de Python)
-
-### 2. Instalación
-
-**Clonar el repositorio:**
-
-```bash
-git clone <tu-repositorio>
-cd quiz_api
-```
-
-**Crear entorno virtual:**
-
-```bash
-# Linux/Mac:
-python -m venv venv
-source venv/bin/activate
-
-# Windows (PowerShell):
-python -m venv venv
-venv\Scripts\Activate.ps1
-
-# Windows (CMD):
-python -m venv venv
-venv\Scripts\activate.bat
-```
-
-**Instalar dependencias:**
-
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-**Configurar variables de entorno (opcional):**
+2) Iniciar el servidor (desde la carpeta del proyecto)
 
-```bash
-cp .env.example .env
-# Edita .env si necesitas cambiar la configuración
+```powershell
+uvicorn app.main:app --reload --port 8001
 ```
 
-### 3. Ejecutar la Aplicación
+3) Abrir en el navegador
 
-```bash
-uvicorn app.main:app --reload
-```
+- Frontend simple: http://127.0.0.1:8001
+- Swagger UI (probar endpoints): http://127.0.0.1:8001/docs
+- ReDoc (documentación): http://127.0.0.1:8001/redoc
 
-La API estará disponible en: **http://localhost:8000**
+Endpoints principales (resumen):
+- POST /questions/        Crear pregunta
+- GET  /questions/        Listar preguntas
+- DELETE /questions/{id}  Eliminar pregunta (soft-delete)
+- POST /quiz-sessions/    Iniciar sesión de quiz
+- POST /answers/          Registrar respuesta
 
-### 4. Documentación Interactiva
+Nota rápida:
+- `respuesta_correcta` es un índice (0-based) que apunta a la opción correcta en `opciones`.
+- El DELETE sobre `/questions/{id}` hace soft-delete (la pregunta se marca inactiva).
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+Ejemplo mínimo para crear una pregunta (JSON):
 
-## 📚 Estructura del Proyecto
-
-```
-quiz_api/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                 # Configuración principal de FastAPI
-│   ├── database.py             # Configuración de SQLAlchemy
-│   ├── models/                 # Modelos SQLAlchemy
-│   │   ├── __init__.py
-│   │   ├── question.py         # Modelo de preguntas
-│   │   ├── quiz_session.py     # Modelo de sesiones
-│   │   └── answer.py           # Modelo de respuestas
-│   ├── schemas/                # Schemas Pydantic
-│   │   ├── __init__.py
-│   │   ├── question.py         # Schemas de preguntas
-│   │   ├── quiz_session.py     # Schemas de sesiones
-│   │   └── answer.py           # Schemas de respuestas
-│   ├── routers/                # Rutas de la API
-│   │   ├── __init__.py
-│   │   ├── questions.py        # Endpoints de preguntas
-│   │   ├── quiz_sessions.py    # Endpoints de sesiones
-│   │   ├── answers.py          # Endpoints de respuestas
-│   │   └── statistics.py       # Endpoints de estadísticas
-│   └── services/               # Lógica de negocio
-│       ├── __init__.py
-│       └── quiz_service.py     # Servicio de quiz
-├── requirements.txt            # Dependencias Python
-├── .env.example               # Variables de entorno ejemplo
-├── .gitignore                 # Archivos a ignorar en Git
-└── README.md                  # Este archivo
-```
-
-## 🗄️ Modelos de Datos
-
-### Question (Pregunta)
-
-```python
+```json
 {
-  "id": 1,
-  "pregunta": "¿Qué es FastAPI?",
-  "opciones": ["Una base de datos", "Un framework web", "Un lenguaje", "Un editor"],
+  "pregunta": "¿Cuál es la capital de Francia?",
+  "opciones": ["Madrid", "París", "Roma", "Berlín"],
   "respuesta_correcta": 1,
-  "explicacion": "FastAPI es un framework web moderno y rápido para Python",
-  "categoria": "Tecnología",
-  "dificultad": "fácil",
-  "created_at": "2023-12-09T10:00:00",
-  "is_active": true
+  "explicacion": "París es la capital de Francia",
+  "categoria": "Geografía",
+  "dificultad": "fácil"
 }
-```
-
-### QuizSession (Sesión de Quiz)
-
-```python
-{
-  "id": 1,
-  "usuario_nombre": "Juan Pérez",
-  "fecha_inicio": "2023-12-09T10:00:00",
-  "fecha_fin": "2023-12-09T10:15:00",
-  "puntuacion_total": 80,
-  "preguntas_respondidas": 10,
-  "preguntas_correctas": 8,
-  "estado": "completado",
-  "tiempo_total_segundos": 900,
-  "created_at": "2023-12-09T10:00:00"
-}
-```
-
-### Answer (Respuesta)
-
-```python
-{
-  "id": 1,
-  "quiz_session_id": 1,
-  "question_id": 1,
-  "respuesta_seleccionada": 1,
-  "es_correcta": true,
-  "tiempo_respuesta_segundos": 15,
-  "created_at": "2023-12-09T10:00:30"
-}
-```
-
-## 🔧 Endpoints de la API
-
-### Preguntas (`/questions`)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/questions/` | Crear una nueva pregunta |
-| GET | `/questions/` | Listar preguntas con paginación y filtros |
-| GET | `/questions/{question_id}` | Obtener pregunta por ID |
-| GET | `/questions/random` | Obtener preguntas aleatorias |
-| PUT | `/questions/{question_id}` | Actualizar pregunta |
-| DELETE | `/questions/{question_id}` | Eliminar pregunta (soft delete) |
-| POST | `/questions/bulk` | Crear múltiples preguntas |
-
-**Ejemplo: Crear pregunta**
-
-```bash
-curl -X POST "http://localhost:8000/questions/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pregunta": "¿Cuál es la capital de Francia?",
-    "opciones": ["Madrid", "París", "Londres", "Berlín"],
-    "respuesta_correcta": 1,
-    "explicacion": "París es la capital de Francia",
-    "categoria": "Geografía",
-    "dificultad": "fácil"
-  }'
-```
-
-**Ejemplo: Listar preguntas con filtros**
 
 ```bash
 curl "http://localhost:8000/questions/?categoria=Tecnología&dificultad=medio&skip=0&limit=10"
@@ -370,7 +219,7 @@ Este script crea:
 
 Accede a http://localhost:8000/docs para ver la documentación interactiva y probar todos los endpoints.
 
-## 📊 Ejemplos de Respuestas
+## Ejemplos de Respuestas
 
 ### Crear Pregunta (POST /questions/)
 
@@ -444,7 +293,7 @@ Accede a http://localhost:8000/docs para ver la documentación interactiva y pro
 }
 ```
 
-## 🔒 Validaciones
+##  Validaciones
 
 La API implementa validaciones en múltiples capas:
 
@@ -457,7 +306,7 @@ La API implementa validaciones en múltiples capas:
 - No se puede responder la misma pregunta dos veces en una sesión
 - Categoría y dificultad deben ser valores válidos
 
-## 🚨 Códigos de Error
+## Códigos de Error
 
 | Código | Descripción |
 |--------|-------------|
@@ -488,24 +337,12 @@ DEBUG=True
 - **Pydantic**: Validación de datos
 - **Uvicorn**: Servidor ASGI
 
-## 📝 Notas Importantes
+##  Notas Importantes
 
 1. **Soft Delete**: Las preguntas se eliminan con soft delete (is_active = False)
 2. **Puntuación**: 10 puntos por respuesta correcta
 3. **Validación Automática**: Las respuestas se validan automáticamente
 4. **Relaciones**: Las respuestas se eliminan en cascada con sesiones y preguntas
-
-## 🤝 Contribuciones
-
-Este proyecto es un examen final. Para cambios significativos, por favor abre un issue primero.
-
-## 📄 Licencia
-
-Este proyecto está bajo licencia MIT.
-
-## 👤 Autor
-
-Desarrollado como examen final del curso de Programación.
 
 ---
 

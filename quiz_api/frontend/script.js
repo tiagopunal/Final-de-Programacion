@@ -82,7 +82,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.add('active');
         document.getElementById(tabName).classList.add('active');
         
-        // no stats tab anymore
+        if (tabName === 'stats') {
+            loadStatistics();
+        }
     });
 });
 
@@ -215,10 +217,14 @@ async function startQuiz(count) {
         
         currentQuizSession = await sessionResponse.json();
         
-        // Cargar preguntas
-        const questionsResponse = await fetch(`${API_URL}/questions/?skip=0&limit=100`);
-        const allQuestions = await questionsResponse.json();
-        const questions = (allQuestions.questions || allQuestions).slice(0, count);
+        // Cargar preguntas aleatorias desde el backend
+        // Usamos el endpoint /questions/random para obtener preguntas en orden aleatorio
+        const questionsResponse = await fetch(`${API_URL}/questions/random?limit=${count}`);
+        if (!questionsResponse.ok) {
+            const err = await questionsResponse.json().catch(() => ({}));
+            throw new Error(err.detail || 'No se pudieron obtener preguntas aleatorias');
+        }
+        const questions = await questionsResponse.json();
         
         quizQuestions = questions;
         quizCurrentIndex = 0;
@@ -295,10 +301,11 @@ function selectAnswer(answerIndex) {
     const isCorrect = answerIndex === question.respuesta_correcta;
     const selectedText = question.opciones[answerIndex];
 
+    // Guardamos el índice de la respuesta (entero) para que el backend lo valide correctamente
     quizAnswers.push({
         question_id: question.id,
-        respuesta_seleccionada: selectedText,
-        es_correcta: isCorrect
+        respuesta_seleccionada: answerIndex,
+        tiempo_respuesta_segundos: 0
     });
 
     // Marcar respuesta visualmente
@@ -319,24 +326,18 @@ function selectAnswer(answerIndex) {
 
 async function finishQuiz() {
     try {
-        // Calcular puntuación
-        const correctAnswers = quizAnswers.filter(a => a.es_correcta).length;
-        const totalQuestions = quizAnswers.length;
-        const score = Math.round((correctAnswers / totalQuestions) * 100);
+        // Calcular puntuación: comparar los índices guardados con la respuesta correcta
+        const totalQuestions = quizAnswers.length || quizQuestions.length || 0;
+        const correctAnswers = quizAnswers.reduce((acc, a) => {
+            const q = quizQuestions.find(qi => qi.id === a.question_id);
+            if (!q) return acc;
+            return acc + (a.respuesta_seleccionada === q.respuesta_correcta ? 1 : 0);
+        }, 0);
+        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
         
-        // Completar sesión
-        await fetch(`${API_URL}/quiz-sessions/${currentQuizSession.id}/complete`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                puntuacion_total: score,
-                preguntas_respondidas: totalQuestions,
-                preguntas_correctas: correctAnswers
-            })
-        });
-        
-        // Registrar respuestas
+        // Registrar respuestas primero
         for (const answer of quizAnswers) {
+            // Enviar sólo los campos esperados por el schema del backend
             await fetch(`${API_URL}/answers/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -344,9 +345,23 @@ async function finishQuiz() {
                     quiz_session_id: currentQuizSession.id,
                     question_id: answer.question_id,
                     respuesta_seleccionada: answer.respuesta_seleccionada,
-                    es_correcta: answer.es_correcta
+                    tiempo_respuesta_segundos: answer.tiempo_respuesta_segundos || 0
                 })
             });
+        }
+
+        // Completar sesión (backend recalcula puntuación basada en respuestas)
+        const completeResp = await fetch(`${API_URL}/quiz-sessions/${currentQuizSession.id}/complete`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tiempo_total_segundos: 0 })
+        });
+
+        if (completeResp.ok) {
+            const sessionData = await completeResp.json();
+            currentQuizSession = sessionData;
+            // Refrescar estadísticas en vivo
+            loadStatistics();
         }
         
         // Mostrar resultado
@@ -374,6 +389,39 @@ async function finishQuiz() {
 function backToQuizStart() {
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('quiz-start').style.display = 'block';
+}
+
+// STATISTICS
+async function loadStatistics() {
+    try {
+        const response = await fetch(`${API_URL}/statistics/global`);
+        const stats = await response.json();
+
+        const container = document.getElementById('stats-container');
+        if (!container) return;
+
+        // Build global stats HTML
+        const globalHtml = `
+            <div class="stat-card">
+                <div class="stat-label">Total de Preguntas</div>
+                <div class="stat-value">${stats.total_preguntas_activas || 0}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sesiones completadas</div>
+                <div class="stat-value">${stats.total_sesiones_completadas || 0}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Promedio de aciertos</div>
+                <div class="stat-value">${stats.promedio_aciertos_general || 0}%</div>
+            </div>
+        `;
+
+        // Render solo estadísticas globales
+        container.innerHTML = `<div style="display:flex; gap:20px; flex-wrap:wrap;">${globalHtml}</div>`;
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cargar estadísticas');
+    }
 }
 
 // Estadísticas removidas del frontend
