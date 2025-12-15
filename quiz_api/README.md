@@ -4,25 +4,79 @@ Pequeña API REST para gestionar un quiz (FastAPI + SQLAlchemy + SQLite).
 
 Nota: las preguntas base también están en `seed_questions.json`. Al iniciar la app, si la base de datos está vacía, estas preguntas se cargarán automáticamente.
 
-para arrancar y probar:
+para arrancar y probar (resumen rápido):
 
-1) Instalar dependencias
+1) Crear y activar un virtualenv (recomendado)
+
+PowerShell:
+
+```powershell
+python -m venv .venv
+. .venv\Scripts\Activate.ps1
+```
+
+Bash (macOS / Linux):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+2) Instalar dependencias
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-2) Iniciar el servidor (desde la carpeta del proyecto)
+3) Copiar variables de entorno y crear datos de prueba
+
+PowerShell:
 
 ```powershell
-uvicorn app.main:app --reload --port 8001
+Copy-Item .env.example .env
+python init_db.py
 ```
 
-3) Abrir en el navegador
+Bash:
 
-- Frontend simple: http://127.0.0.1:8001
-- Swagger UI (probar endpoints): http://127.0.0.1:8001/docs
-- ReDoc (documentación): http://127.0.0.1:8001/redoc
+```bash
+cp .env.example .env
+python init_db.py
+```
+
+4) Iniciar el servidor (desde la carpeta `quiz_api`)
+
+PowerShell (ejemplo):
+
+```powershell
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
+
+Bash (ejemplo):
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+```
+
+Abrir en el navegador:
+
+- Frontend simple: http://127.0.0.1:8000
+- Swagger UI (probar endpoints): http://127.0.0.1:8000/docs
+- ReDoc (documentación): http://127.0.0.1:8000/redoc
+
+PowerShell:
+
+```powershell
+$env:PYTHONPATH = "C:\ruta\a\quiz_api"
+# luego ejecutar uvicorn como arriba
+```
+
+Bash:
+
+```bash
+export PYTHONPATH=/ruta/a/quiz_api
+# luego ejecutar uvicorn como arriba
+```
 
 Endpoints principales (resumen):
 - POST /questions/        Crear pregunta
@@ -31,9 +85,6 @@ Endpoints principales (resumen):
 - POST /quiz-sessions/    Iniciar sesión de quiz
 - POST /answers/          Registrar respuesta
 
-Nota rápida:
-- `respuesta_correcta` es un índice (0-based) que apunta a la opción correcta en `opciones`.
-- El DELETE sobre `/questions/{id}` hace soft-delete (la pregunta se marca inactiva).
 
 Ejemplo mínimo para crear una pregunta (JSON):
 
@@ -202,42 +253,64 @@ curl -X PUT "http://localhost:8000/quiz-sessions/1/complete" \
 curl "http://localhost:8000/statistics/session/1"
 ```
 
-## Ejecutar localmente (Windows - PowerShell)
+## Ejecutar localmente
 
-Pasos mínimos para que tu profesor pueda ejecutar y probar el proyecto en Windows:
+Instrucciones paso a paso (Windows PowerShell y macOS/Linux). Ejecuta los comandos desde la carpeta `quiz_api`.
 
-1. Abrir PowerShell y ubicarse en la carpeta `quiz_api` del proyecto.
-
-2. Crear y activar un virtualenv (si no existe):
+Windows (PowerShell):
 
 ```powershell
+# 1) Crear y activar virtualenv
 python -m venv .venv
 . .venv\Scripts\Activate.ps1
-```
 
-3. Instalar dependencias:
-
-```powershell
+# 2) Instalar dependencias
 pip install -r requirements.txt
-```
 
-4. Copiar variables de entorno y crear datos de prueba:
-
-```powershell
+# 3) Copiar .env y crear datos de prueba
 Copy-Item .env.example .env
 python init_db.py
+
+# 4) Arrancar servidor (ejemplo puerto 8000)
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
-5. Arrancar el servidor (por defecto usamos el puerto `8001` en este repo):
+macOS / Linux (bash):
 
-```powershell
-.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8001
+```bash
+# 1) Crear y activar virtualenv
+python -m venv .venv
+source .venv/bin/activate
+
+# 2) Instalar dependencias
+pip install -r requirements.txt
+
+# 3) Copiar .env y crear datos de prueba
+cp .env.example .env
+python init_db.py
+
+# 4) Arrancar servidor (ejemplo puerto 8000)
+.venv/bin/python -m uvicorn app.main:app --reload --port 8000
 ```
 
-6. Abrir en el navegador:
+Abrir en el navegador:
 
-- Frontend: http://127.0.0.1:8001
-- Documentación (Swagger UI): http://127.0.0.1:8001/docs
+- Frontend: http://127.0.0.1:8000
+- Swagger UI (probar endpoints): http://127.0.0.1:8000/docs
+
+  PowerShell:
+
+  ```powershell
+  $env:PYTHONPATH = "C:\ruta\a\quiz_api"
+  ```
+
+  Bash:
+
+  ```bash
+  export PYTHONPATH=/ruta/a/quiz_api
+  ```
+
+- Para un entorno de producción, ejecuta uvicorn sin `--reload` o usa un servidor ASGI como `gunicorn` con `uvicorn` workers.
 
 ## Crear y ver preguntas
 
@@ -245,7 +318,7 @@ python init_db.py
 - Con `curl` (ejemplo POST para crear una pregunta):
 
 ```bash
-curl -X POST "http://127.0.0.1:8001/questions/" \
+curl -X POST "http://127.0.0.1:8000/questions/" \
   -H "Content-Type: application/json" \
   -d '{
     "pregunta": "¿Cuál es la capital de Francia?",
@@ -260,7 +333,7 @@ curl -X POST "http://127.0.0.1:8001/questions/" \
 - Listar preguntas (GET):
 
 ```bash
-curl "http://127.0.0.1:8001/questions/?skip=0&limit=20"
+curl "http://127.0.0.1:8000/questions/?skip=0&limit=20"
 ```
 ## 🧪 Testing
 
