@@ -30,7 +30,7 @@ app.add_middleware(
 def startup_event():
     """Inicializar la base de datos cuando arranca la aplicación"""
     init_db()
-    print("✓ Base de datos inicializada")
+    print("Base de datos inicializada")
 
 
 # Incluir routers

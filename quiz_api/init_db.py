@@ -158,7 +158,7 @@ def crear_preguntas(db: Session):
     for pregunta in preguntas_creadas:
         db.refresh(pregunta)
     
-    print(f"✓ {len(preguntas_creadas)} preguntas creadas")
+    print(f"{len(preguntas_creadas)} preguntas creadas")
     return preguntas_creadas
 
 
@@ -223,36 +223,36 @@ def crear_sesiones_y_respuestas(db: Session, preguntas: list):
         sesiones_creadas.append(sesion)
     
     db.commit()
-    
-    print(f"✓ {len(sesiones_creadas)} sesiones de quiz creadas con respuestas")
+
+    print(f"{len(sesiones_creadas)} sesiones de quiz creadas con respuestas")
     return sesiones_creadas
 
 
 def main():
     """Función principal para inicializar la base de datos"""
-    
-    print("🚀 Inicializando base de datos...")
-    
+
+    print("Inicializando base de datos...")
+
     # Crear tablas
     init_db()
-    print("✓ Tablas creadas")
-    
+    print("Tablas creadas")
+
     # Obtener sesión
     db = SessionLocal()
-    
+
     try:
         # Crear preguntas
         preguntas = crear_preguntas(db)
-        
+
         # Crear sesiones y respuestas
         sesiones = crear_sesiones_y_respuestas(db, preguntas)
-        
-        print("\n✅ Base de datos inicializada correctamente")
+
+        print("\nBase de datos inicializada correctamente")
         print(f"   - Preguntas: {len(preguntas)}")
         print(f"   - Sesiones: {len(sesiones)}")
-        
+
     except Exception as e:
-        print(f"❌ Error al inicializar: {e}")
+        print(f"Error al inicializar: {e}")
         db.rollback()
     finally:
         db.close()
