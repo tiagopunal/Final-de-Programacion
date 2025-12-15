@@ -200,6 +200,66 @@ curl -X PUT "http://localhost:8000/quiz-sessions/1/complete" \
 curl "http://localhost:8000/statistics/session/1"
 ```
 
+## Ejecutar localmente (Windows - PowerShell)
+
+Pasos mínimos para que tu profesor pueda ejecutar y probar el proyecto en Windows:
+
+1. Abrir PowerShell y ubicarse en la carpeta `quiz_api` del proyecto.
+
+2. Crear y activar un virtualenv (si no existe):
+
+```powershell
+python -m venv .venv
+. .venv\Scripts\Activate.ps1
+```
+
+3. Instalar dependencias:
+
+```powershell
+pip install -r requirements.txt
+```
+
+4. Copiar variables de entorno y crear datos de prueba:
+
+```powershell
+Copy-Item .env.example .env
+python init_db.py
+```
+
+5. Arrancar el servidor (por defecto usamos el puerto `8001` en este repo):
+
+```powershell
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8001
+```
+
+6. Abrir en el navegador:
+
+- Frontend: http://127.0.0.1:8001
+- Documentación (Swagger UI): http://127.0.0.1:8001/docs
+
+## Crear y ver preguntas
+
+- Desde la UI: abre la página principal y usa el formulario de creación de preguntas. Las preguntas creadas se muestran en la lista.
+- Con `curl` (ejemplo POST para crear una pregunta):
+
+```bash
+curl -X POST "http://127.0.0.1:8001/questions/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pregunta": "¿Cuál es la capital de Francia?",
+    "opciones": ["Madrid", "París", "Roma", "Berlín"],
+    "respuesta_correcta": 1,
+    "explicacion": "París es la capital de Francia",
+    "categoria": "Geografía",
+    "dificultad": "fácil"
+  }'
+```
+
+- Listar preguntas (GET):
+
+```bash
+curl "http://127.0.0.1:8001/questions/?skip=0&limit=20"
+```
 ## 🧪 Testing
 
 ### Crear Datos de Prueba
@@ -212,7 +272,6 @@ python init_db.py
 
 Este script crea:
 - 15+ preguntas de diferentes categorías y dificultades
-- 3+ sesiones de quiz completadas
 - Respuestas registradas para cada sesión
 
 ### Verificar Endpoints
