@@ -2,7 +2,7 @@
 
 Pequeña API REST para gestionar un quiz (FastAPI + SQLAlchemy + SQLite).
 
-Nota: la base de datos pre-poblada `quiz_api.db` ya está incluida en el repositorio; no es necesario ejecutar `init_db.py` si no deseas regenerar los datos.
+Nota: las preguntas base también están en `seed_questions.json`. Al iniciar la app, si la base de datos está vacía, estas preguntas se cargarán automáticamente.
 
 para arrancar y probar:
 
@@ -221,13 +221,11 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-4. Copiar variables de entorno y crear datos de prueba (opcional):
+4. Copiar variables de entorno y crear datos de prueba:
 
 ```powershell
 Copy-Item .env.example .env
-# Si quieres crear o refrescar datos de prueba:
 python init_db.py
-# Nota: el repositorio incluye `quiz_api.db` pre-poblada con preguntas.
 ```
 
 5. Arrancar el servidor (por defecto usamos el puerto `8001` en este repo):

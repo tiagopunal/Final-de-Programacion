@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 from app.database import init_db
+from init_db import seed_db_if_empty
 from app.routers import questions, quiz_sessions, answers, statistics
 
 # Inicializar FastAPI app
@@ -29,8 +30,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     """Inicializar la base de datos cuando arranca la aplicación"""
-    init_db()
-    print("Base de datos inicializada")
+    # Crear tablas y aplicar seed si la DB está vacía
+    seed_db_if_empty()
+    print("Base de datos inicializada y seed aplicada si era necesario")
 
 
 # Incluir routers

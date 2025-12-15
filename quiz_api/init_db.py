@@ -3,6 +3,8 @@ Script para inicializar la base de datos con datos de prueba.
 Ejecutar con: python init_db.py
 """
 import sys
+import json
+from pathlib import Path
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,48 @@ from app.database import SessionLocal, init_db
 from app.models.question import Question
 from app.models.quiz_session import QuizSession
 from app.models.answer import Answer
+
+
+def seed_db_from_file(db: Session, filepath: str | Path):
+    """Carga preguntas desde un archivo JSON y las inserta en la base de datos."""
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise FileNotFoundError(f"Archivo de seed no encontrado: {filepath}")
+
+    with filepath.open(encoding="utf-8") as f:
+        data = json.load(f)
+
+    preguntas_creadas = []
+    for pregunta_data in data:
+        pregunta = Question(**pregunta_data)
+        db.add(pregunta)
+        preguntas_creadas.append(pregunta)
+
+    db.commit()
+    for pregunta in preguntas_creadas:
+        db.refresh(pregunta)
+
+    print(f"{len(preguntas_creadas)} preguntas cargadas desde {filepath.name}")
+    return preguntas_creadas
+
+
+def seed_db_if_empty(seed_filename: str = "seed_questions.json"):
+    """Crea tablas (si no existen) y carga datos desde seed si la tabla de preguntas está vacía."""
+    init_db()
+    db = SessionLocal()
+    try:
+        preguntas_existentes = db.query(Question).count()
+        if preguntas_existentes > 0:
+            print(f"La base de datos ya contiene {preguntas_existentes} preguntas. Omitiendo seed.")
+            return
+
+        seed_path = Path(__file__).parent / seed_filename
+        preguntas = seed_db_from_file(db, seed_path)
+
+        # Opcional: crear sesiones y respuestas de ejemplo si no existen
+        crear_sesiones_y_respuestas(db, preguntas)
+    finally:
+        db.close()
 
 
 def crear_preguntas(db: Session):
@@ -234,28 +278,12 @@ def main():
     print("Inicializando base de datos...")
 
     # Crear tablas
-    init_db()
-    print("Tablas creadas")
-
-    # Obtener sesión
-    db = SessionLocal()
-
+    # Seed desde archivo si la DB está vacía
     try:
-        # Crear preguntas
-        preguntas = crear_preguntas(db)
-
-        # Crear sesiones y respuestas
-        sesiones = crear_sesiones_y_respuestas(db, preguntas)
-
-        print("\nBase de datos inicializada correctamente")
-        print(f"   - Preguntas: {len(preguntas)}")
-        print(f"   - Sesiones: {len(sesiones)}")
-
+        seed_db_if_empty()
+        print("Base de datos inicializada y seed aplicada si era necesario")
     except Exception as e:
-        print(f"Error al inicializar: {e}")
-        db.rollback()
-    finally:
-        db.close()
+        print(f"Error al inicializar/seedear: {e}")
 
 
 if __name__ == "__main__":
