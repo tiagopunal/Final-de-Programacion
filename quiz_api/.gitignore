@@ -33,5 +33,5 @@ env/
 *~
 .DS_Store
 *.db
-quiz_api.db
+!quiz_api.db
 .env
